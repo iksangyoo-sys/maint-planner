@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block page %}
+<section class="hero">
+  <div>
+    <div class="small" style="color:var(--clay-deep);font-weight:600;letter-spacing:.06em">PROJECT SCHEDULING · CPM · BASELINE</div>
+    <h1>계획은 <em>간트</em>로, 지연은<br>데이터와 AI로 대응합니다.</h1>
+    <p>WBS·선후행 관계·자원을 입력하면 주공정(CPM)과 예측 완료일을 자동 계산합니다.
+      기준선과 비교해 지연을 찾아내고, gpt-4o-mini가 만회 대책 보고서 초안을 써 드립니다.</p>
+    <ul class="feature-list">
+      <li>작업표 + 간트 차트 (들여쓰기 WBS)</li>
+      <li>FS·SS·FF·SF 관계와 지연/리드</li>
+      <li>네트워크(PERT)·WBS 차트</li>
+      <li>자원 시트·사용량·과부하</li>
+      <li>기준선 vs 실적 추적 간트</li>
+      <li>엑셀 · PPT · Word(docx) 저장</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>새 프로젝트</h3>
+    <form method="post" action="{{ url_for('project_create') }}">
+      <label class="f"><span>프로젝트명</span><input name="name" required placeholder="예) 소성로 증설 프로젝트"></label>
+      <div class="grid g2" style="gap:12px">
+        <label class="f"><span>시작일</span><input type="date" name="start_date" value="{{ today }}" required></label>
+        <label class="f"><span>PM</span><input name="manager" placeholder="담당자"></label>
+      </div>
+      <label class="check"><input type="checkbox" name="skip_weekends" value="1" checked> 주말 제외(작업일 달력)</label>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn primary">만들기</button>
+      </div>
+    </form>
+    <hr style="border:0;border-top:1px solid var(--line);margin:16px 0">
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <form method="post" action="{{ url_for('project_sample') }}"><button class="btn dark">예제 프로젝트 불러오기</button></form>
+      <form method="post" action="{{ url_for('project_import') }}" enctype="multipart/form-data" id="impf">
+        <label class="btn" style="cursor:pointer">JSON 가져오기<input type="file" name="file" accept=".json" hidden onchange="document.getElementById('impf').submit()"></label>
+      </form>
+    </div>
+  </div>
+</section>
+
+<h2>내 프로젝트</h2>
+<div class="card" style="padding:0">
+  {% for pr in projects %}
+  <div class="proj">
+    <div style="flex:1;min-width:0">
+      <a class="nm" href="{{ url_for('gantt', pid=pr.id) }}">{{ pr.name }}</a>
+      <div class="small muted">시작 {{ pr.start_date|kdate }} · 작업 {{ pr.n_tasks }}개{% if pr.status_date %} · 진척 기준일 {{ pr.status_date|kdate }}{% endif %}{% if pr.baseline_saved_at %} · 기준선 저장됨{% endif %}</div>
+    </div>
+    <a class="btn sm" href="{{ url_for('export_json', pid=pr.id) }}">백업</a>
+    <form method="post" action="{{ url_for('project_delete', pid=pr.id) }}" onsubmit="return confirm('「{{ pr.name }}」 프로젝트를 삭제할까요?')"><button class="btn sm ghost danger">삭제</button></form>
+  </div>
+  {% else %}
+  <div class="proj muted">아직 프로젝트가 없습니다. 예제 프로젝트로 시작해 보세요.</div>
+  {% endfor %}
+</div>
+{% endblock %}

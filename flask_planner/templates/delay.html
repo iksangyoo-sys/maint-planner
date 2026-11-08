@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block content %}
+{% set k = b.kpi %}
+<div class="page-head">
+  <div><h1>지연 분석 · 대책 보고서</h1>
+    <p>기준선 대비 예측 일정(진척 기준일 {{ b.status_date|kdate if b.status_date else '미설정' }} 기준)을 분석하고, {{ ai_model }}로 만회 대책 보고서를 작성합니다.</p></div>
+</div>
+{% if not b.baseline_finish %}
+<div class="flash warn">기준선이 저장되지 않아 지연을 판정할 수 없습니다. 간트 차트에서 <b>기준선 저장</b>을 먼저 실행하세요.</div>
+{% elif not b.status_date %}
+<div class="flash warn">진척 기준일이 없습니다. 실적을 입력한 날짜를 진척 기준일로 지정하면 계획 공정률·SPI가 계산됩니다.</div>
+{% endif %}
+<div class="grid g4">
+  <div class="kpi {{ 'hot' if (k.finish_var or 0) > 0 else 'good' }}"><div class="k">완료일 차이</div><div class="v">{% if k.finish_var is none %}-{% else %}{{ '+' if k.finish_var > 0 }}{{ k.finish_var }}일{% endif %}</div><div class="s">기준선 {{ b.baseline_finish|kdate or '-' }} → 예측 {{ b.project_finish|kdate }}</div></div>
+  <div class="kpi"><div class="k">실적 / 계획 공정률</div><div class="v">{{ k.actual_pct }}%</div><div class="s">계획 {{ k.planned_pct if k.planned_pct is not none else '-' }}%</div></div>
+  <div class="kpi {{ 'hot' if k.spi and k.spi < 0.9 }}"><div class="k">SPI (일정성과지수)</div><div class="v">{{ k.spi if k.spi is not none else '-' }}</div><div class="s">1.0 미만이면 계획보다 늦음</div></div>
+  <div class="kpi {{ 'hot' if k.delayed }}"><div class="k">지연 · 주의 작업</div><div class="v">{{ k.delayed }} · {{ k.warning }}</div><div class="s">주공정 작업 {{ k.critical_count }}건</div></div>
+</div>
+
+<h2 style="margin-top:26px">지연 작업</h2>
+<div class="tbl-wrap"><table class="t">
+  <thead><tr><th>ID</th><th>작업명</th><th>상태</th><th class="c">주공정</th><th>기준선 완료</th><th>예측 완료</th><th class="r">완료 차이</th><th class="r">계획/실적 진척</th><th class="r">총여유</th><th>자원</th></tr></thead>
+  <tbody>
+  {% for t in b.tasks if not t.summary and t.status in ('지연','주의') %}
+  <tr><td class="num">{{ t.row }}</td><td>{{ t.name }}</td><td><span class="badge {{ t.status }}">{{ t.status }}</span></td>
+    <td class="c">{% if t.critical %}<span class="badge crit">주공정</span>{% endif %}</td>
+    <td class="num">{{ t.baseline_finish|kdate }}</td><td class="num">{{ t.finish|kdate }}</td>
+    <td class="r num" style="{{ 'color:var(--red);font-weight:600' if (t.finish_var or 0) > 0 }}">{{ '+' if (t.finish_var or 0) > 0 }}{{ t.finish_var }}일</td>
+    <td class="r num">{{ t.planned_pct if t.planned_pct is not none else '-' }}% / {{ t.pct }}%</td>
+    <td class="r num">{{ t.total_float }}일</td><td class="small">{{ t.resources }}</td></tr>
+  {% else %}
+  <tr><td colspan="10" class="muted">지연된 작업이 없습니다.</td></tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+
+<div class="grid g2" style="margin-top:22px;align-items:start">
+  <form class="card" method="post" action="{{ url_for('report_generate', pid=p.id) }}" onsubmit="this.querySelector('button').classList.add('busy');this.querySelector('button').disabled=true">
+    <h3>지연 대책 보고서 작성</h3>
+    <p class="small muted" style="margin-top:0">일정 데이터(지연 작업·주공정·자원)와 아래 현장 메모를 {{ ai_model }}에 보내 두괄식·개조식 보고서 초안을 만들고 Word(.docx)로 저장합니다.
+      {% if not ai_ready %}<br><b style="color:#8A5A00">OPENAI_API_KEY 환경변수가 없어 규칙 기반 초안으로 작성됩니다.</b>{% endif %}</p>
+    <label class="f"><span>현장 메모 (지연 원인, 제약 조건, 가용 자원 등 · 선택)</span>
+      <textarea name="notes" rows="4" placeholder="예) 소성로 제작사 내화물 수급 지연으로 출하 2주 연기 통보. 설계 검토 회의 2회 연기. 연장근무는 주 8시간까지 가능."></textarea></label>
+    <button class="btn primary"><span class="spinner"></span>보고서 작성</button>
+  </form>
+  <div class="card">
+    <h3>작성된 보고서</h3>
+    {% for r in reports %}
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--line)">
+      <div style="flex:1"><a href="{{ url_for('report_view', pid=p.id, rid=r.id) }}">{{ r.created_at }}</a> <span class="badge">{{ r.source }}</span>
+        {% if r.notes %}<div class="small muted">{{ r.notes|truncate(48) }}</div>{% endif %}</div>
+      <a class="btn sm" href="{{ url_for('report_docx', pid=p.id, rid=r.id) }}">docx</a>
+      <form method="post" action="{{ url_for('report_delete', pid=p.id, rid=r.id) }}"><button class="btn sm ghost danger">삭제</button></form>
+    </div>
+    {% else %}<p class="small muted">아직 작성된 보고서가 없습니다.</p>{% endfor %}
+  </div>
+</div>
+{% endblock %}
