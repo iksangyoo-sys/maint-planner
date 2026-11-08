@@ -34,6 +34,8 @@ pip install -r requirements.txt
 python app.py            # http://127.0.0.1:5000
 ```
 
+Windows에서는 `run.bat`을 더블클릭하면 패키지 확인 → 실행 → 브라우저 열기까지 한 번에 됩니다. 명령 프롬프트에서 `py app.py`로 실행하신다면 패키지도 `py -m pip install -r requirements.txt`로 설치해야 같은 파이썬에 들어갑니다.
+
 첫 화면에서 **예제 프로젝트 불러오기**를 누르면 「양극재 소성 2라인 증설 프로젝트」(가상 데이터, 기준선 저장 후 진척 기준일 2026-11-06 현재 11작업일 지연 상태)가 만들어집니다.
 
 ### OpenAI 키

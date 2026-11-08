@@ -43,6 +43,7 @@
 <div class="detail" id="detail"></div>
 {% endblock %}
 {% block scripts %}
+{% with msgs = get_flashed_messages() %}{% if msgs %}<script>window.addEventListener("load",()=>{const t=document.getElementById("toast");t.textContent={{ msgs|join(" ")|tojson }};t.className="toast show";setTimeout(()=>t.className="toast",2600);});</script>{% endif %}{% endwith %}
 <script>window.PLANNER = {pid: {{ p.id }}, mode: "{{ 'tracking' if mode=='tracking' else 'entry' }}"};</script>
 <script src="{{ url_for('static', filename='js/gantt.js') }}"></script>
 {% endblock %}
