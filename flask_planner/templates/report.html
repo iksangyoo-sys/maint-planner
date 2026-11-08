@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block content %}
+{% set d = c._data %}
+<div class="page-head">
+  <div><a class="small" href="{{ url_for('delay', pid=p.id) }}">← 지연 분석</a>
+    <h1 style="margin-top:6px">{{ c.title }}</h1>
+    <p>작성 {{ r.created_at }} · <span class="badge">{{ r.source }}</span> · 진척 기준일 {{ d.project.status_date or '-' }}</p></div>
+  <div style="display:flex;gap:8px"><a class="btn primary" href="{{ url_for('report_docx', pid=p.id, rid=r.id) }}">Word(.docx) 저장</a></div>
+</div>
+<article class="card report">
+  <div class="headline">{{ c.headline }}</div>
+  {% set no = namespace(i=0) %}
+  {% macro h(no, title) %}{% set no.i = no.i + 1 %}<h2><span class="no">{{ ['Ⅰ','Ⅱ','Ⅲ','Ⅳ','Ⅴ','Ⅵ','Ⅶ','Ⅷ','Ⅸ'][no.i-1] }}.</span>{{ title }}</h2>{% endmacro %}
+  {{ h(no, '핵심 요약') }}<ul>{% for s in c.summary %}<li>{{ s }}</li>{% endfor %}</ul>
+  {{ h(no, '일정 현황') }}
+  <table class="t"><tr><th>기준선 완료</th><th>예측 완료</th><th>차이</th><th>계획 공정률</th><th>실적 공정률</th><th>SPI</th></tr>
+    <tr><td>{{ d.project.baseline_finish or '-' }}</td><td>{{ d.project.forecast_finish }}</td><td>{{ d.kpi.finish_var_days if d.kpi.finish_var_days is not none else '-' }}일</td>
+      <td>{{ d.kpi.planned_pct if d.kpi.planned_pct is not none else '-' }}%</td><td>{{ d.kpi.actual_pct }}%</td><td>{{ d.kpi.spi if d.kpi.spi is not none else '-' }}</td></tr></table>
+  <ul>{% for s in c.status %}<li>{{ s }}</li>{% endfor %}</ul>
+  {{ h(no, '지연 원인 분석') }}
+  <table class="t"><tr><th>구분</th><th>원인</th><th>근거</th><th>영향</th></tr>
+  {% for x in c.causes %}<tr><td>{{ x.area }}</td><td>{{ x.cause }}</td><td class="small">{{ x.evidence }}</td><td class="small">{{ x.impact }}</td></tr>{% endfor %}</table>
+  {{ h(no, '만회 대책') }}
+  <table class="t"><tr><th>대상</th><th>기법</th><th>실행 내용</th><th>담당</th><th>기한</th><th class="r">만회</th></tr>
+  {% for x in c.countermeasures %}<tr><td>{{ x.task }}</td><td><span class="badge crit">{{ x.method }}</span></td><td>{{ x.action }}<div class="small muted">{{ x.cost_impact }}</div></td><td>{{ x.owner }}</td><td class="num">{{ x.due }}</td><td class="r num">{{ x.recovery_days }}일</td></tr>{% endfor %}</table>
+  {% if c.recovery_plan %}{{ h(no, '만회 일정 계획') }}
+  <table class="t"><tr><th>단계</th><th>기간</th><th>확인 지표</th></tr>{% for x in c.recovery_plan %}<tr><td>{{ x.step }}</td><td>{{ x.period }}</td><td>{{ x.milestone }}</td></tr>{% endfor %}</table>{% endif %}
+  {% if c.risks %}{{ h(no, '리스크 및 대응') }}
+  <table class="t"><tr><th>리스크</th><th>가능성</th><th>대응</th></tr>{% for x in c.risks %}<tr><td>{{ x.risk }}</td><td>{{ x.probability }}</td><td>{{ x.response }}</td></tr>{% endfor %}</table>{% endif %}
+  {% if c.requests %}{{ h(no, '의사결정·지원 요청') }}<ul>{% for s in c.requests %}<li>{{ s }}</li>{% endfor %}</ul>{% endif %}
+  {{ h(no, '결론') }}<p>{{ c.conclusion }}</p>
+  {% if r.notes %}<p class="small muted">현장 메모: {{ r.notes }}</p>{% endif %}
+</article>
+{% endblock %}

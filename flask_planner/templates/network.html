@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head">
+  <div><h1>네트워크 다이어그램</h1><p>작업 노드를 선후행 순서(최장 경로 단계)로 배치했습니다. 테라코타 테두리가 주공정입니다.</p></div>
+  <div class="legend"><span><i style="background:var(--clay)"></i>주공정</span><span><i style="background:var(--line-2)"></i>일반</span><span><i style="background:var(--olive)"></i>완료</span></div>
+</div>
+{% set s = b.schedule %}
+<div class="canvas">
+<svg width="{{ lay.width }}" height="{{ lay.height }}" xmlns="http://www.w3.org/2000/svg" font-family="Noto Sans KR, sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L8,4L0,8z" fill="#9A968C"/></marker>
+    <marker id="ac" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0L8,4L0,8z" fill="#C15F3C"/></marker>
+  </defs>
+  {% for e in lay.edges %}
+  {% set mx = (e.x1 + e.x2) / 2 %}
+  <path d="M{{ e.x1 }},{{ e.y1 }} C{{ mx }},{{ e.y1 }} {{ mx }},{{ e.y2 }} {{ e.x2 - 2 }},{{ e.y2 }}" fill="none"
+        stroke="{{ '#C15F3C' if e.critical else '#B5AFA3' }}" stroke-width="{{ 1.8 if e.critical else 1.1 }}" marker-end="url(#{{ 'ac' if e.critical else 'a' }})"/>
+  {% if e.type != 'FS' or e.lag %}<text x="{{ mx }}" y="{{ (e.y1 + e.y2) / 2 - 4 }}" font-size="10" fill="#73726C" text-anchor="middle">{{ e.type }}{% if e.lag %}{{ '%+g'|format(e.lag) }}{% endif %}</text>{% endif %}
+  {% endfor %}
+  {% for tid, (x, y) in lay.pos.items() %}
+  {% set t = s.tasks[tid] %}
+  {% set done = t.pct >= 100 %}
+  <g>
+    <title>{{ t.name }} · 총여유 {{ t.total_float }}일</title>
+    <rect x="{{ x }}" y="{{ y }}" width="{{ lay.w }}" height="{{ lay.h }}" rx="{{ 24 if t.is_milestone else 8 }}" fill="{{ '#FBEFE8' if t.critical else ('#F1F4EC' if done else '#FFFFFF') }}"
+          stroke="{{ '#D97757' if t.critical else ('#788C5D' if done else '#D9D2C4') }}" stroke-width="{{ 2 if t.critical else 1 }}"/>
+    <text x="{{ x + 10 }}" y="{{ y + 18 }}" font-size="11" fill="#73726C">ID {{ t.row }} · WBS {{ t.wbs }}</text>
+    <text x="{{ x + lay.w - 10 }}" y="{{ y + 18 }}" font-size="11" fill="{{ '#C15F3C' if t.critical else '#73726C' }}" text-anchor="end">{{ t.pct|round|int }}%</text>
+    <text x="{{ x + 10 }}" y="{{ y + 38 }}" font-size="13" font-weight="600" fill="#1F1E1D">{{ t.name|truncate(15, True, '…') }}</text>
+    <line x1="{{ x }}" x2="{{ x + lay.w }}" y1="{{ y + 48 }}" y2="{{ y + 48 }}" stroke="#ECE6DA"/>
+    <text x="{{ x + 10 }}" y="{{ y + 65 }}" font-size="11" fill="#3D3D3A">시작 {{ t.start.strftime('%m/%d') }}</text>
+    <text x="{{ x + lay.w - 10 }}" y="{{ y + 65 }}" font-size="11" fill="#3D3D3A" text-anchor="end">완료 {{ t.finish.strftime('%m/%d') }}</text>
+    <text x="{{ x + 10 }}" y="{{ y + 82 }}" font-size="11" fill="#73726C">기간 {{ t.forecast_duration }}일</text>
+    <text x="{{ x + lay.w - 10 }}" y="{{ y + 82 }}" font-size="11" fill="#73726C" text-anchor="end">여유 {{ t.total_float }}일</text>
+  </g>
+  {% endfor %}
+</svg>
+</div>
+<div class="card" style="margin-top:16px">
+  <h3>주공정 경로</h3>
+  <p style="margin:0">{% for t in s.critical_path() %}<span class="badge crit">{{ t.row }}. {{ t.name }}</span>{% if not loop.last %} → {% endif %}{% else %}<span class="muted">주공정 작업이 없습니다(모두 완료).</span>{% endfor %}</p>
+</div>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block mainclass %}flush{% endblock %}
+{% block flashes %}{% endblock %}
+{% block content %}
+<div class="toolbar">
+  <div class="grp">
+    <button class="btn sm" data-act="add" title="선택 행 아래에 작업 삽입 (Ins)">＋ 작업</button>
+    <button class="btn sm ghost" data-act="del" title="선택 작업 삭제 (Del)">삭제</button>
+  </div>
+  <span class="sep"></span>
+  <div class="grp">
+    <button class="btn sm ghost" data-act="outdent" title="내어쓰기 (Alt+←)">⇤</button>
+    <button class="btn sm ghost" data-act="indent" title="들여쓰기 (Alt+→)">⇥</button>
+    <button class="btn sm ghost" data-act="up" title="위로 이동">↑</button>
+    <button class="btn sm ghost" data-act="down" title="아래로 이동">↓</button>
+    <button class="btn sm ghost" data-act="link" title="선택 작업을 바로 위 작업과 FS로 연결">🔗 연결</button>
+    <button class="btn sm ghost" data-act="unlink" title="선택 작업의 선행 관계 모두 해제">연결 해제</button>
+  </div>
+  <span class="sep"></span>
+  <div class="grp">
+    <button class="btn sm" data-act="baseline" title="현재 일정을 기준선으로 저장">기준선 저장</button>
+    <button class="btn sm ghost" data-act="clearbase">기준선 지우기</button>
+  </div>
+  <span class="sep"></span>
+  <label>진척 기준일 <input type="date" id="statusDate"></label>
+  <span class="sep"></span>
+  <div class="seg" id="scale">
+    <button data-s="day">일</button><button data-s="week" class="on">주</button><button data-s="month">월</button>
+  </div>
+  <button class="btn sm ghost" data-act="today" title="진척 기준일(없으면 오늘)로 이동">기준일로</button>
+  <button class="btn sm ghost" data-act="compact" title="작업표의 보조 열을 접어 간트 영역을 넓힘">표 접기</button>
+  <div style="flex:1"></div>
+  <div class="seg" id="mode">
+    <button data-m="entry" class="{{ 'on' if mode!='tracking' }}">계획 입력</button>
+    <button data-m="tracking" class="{{ 'on' if mode=='tracking' }}">실적 추적</button>
+  </div>
+</div>
+<div class="kpi-strip" id="kpis"></div>
+<div class="split" id="split">
+  <div class="grid-pane"><table class="tg" id="grid"></table></div>
+  <div class="chart-pane" id="chart"></div>
+</div>
+<div class="detail" id="detail"></div>
+{% endblock %}
+{% block scripts %}
+<script>window.PLANNER = {pid: {{ p.id }}, mode: "{{ 'tracking' if mode=='tracking' else 'entry' }}"};</script>
+<script src="{{ url_for('static', filename='js/gantt.js') }}"></script>
+{% endblock %}

@@ -6,6 +6,8 @@
 
 > 📚 **학생 실습용(비상업적)** 교육 자료입니다. ProjectLibre의 소스코드는 사용하지 않았습니다.
 
+> 🆕 **Flask 버전(ProjectLibre형 일정관리 + 엑셀/PPT 저장 + gpt-4o-mini 지연 대책 보고서)** 은 [`flask_planner/`](flask_planner/README.md) 폴더에 있습니다.
+
 ![대시보드](docs/dashboard.png)
 
 ## 주요 기능

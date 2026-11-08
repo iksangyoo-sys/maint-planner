@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head"><div><h1>자원 시트</h1><p>작업표의 ‘자원 이름’ 칸에 새 이름을 쓰면 여기에 자동 추가됩니다. 단가는 하루(100% 투입) 기준입니다.</p></div></div>
+<div class="tbl-wrap">
+<table class="t mid">
+  <thead><tr><th>자원명</th><th>유형</th><th>그룹</th><th class="r">최대 단위(%)</th><th class="r">단가(원/일)</th><th class="r">투입(인·일)</th><th class="r">비용(원)</th><th class="c">최대 부하</th><th></th></tr></thead>
+  <tbody>
+  {% for u in usage.rows %}{% set r = u.resource %}
+  <tr>
+    <td><form method="post" id="rf{{ r.id }}"><input type="hidden" name="id" value="{{ r.id }}"></form><input form="rf{{ r.id }}" class="in" name="name" value="{{ r.name }}" style="min-width:130px"></td>
+    <td><select form="rf{{ r.id }}" class="in" name="type">{% for tp in ['인력','장비·외주','자재'] %}<option {{ 'selected' if r.type==tp }}>{{ tp }}</option>{% endfor %}</select></td>
+    <td><input form="rf{{ r.id }}" class="in" name="grp" value="{{ r.grp }}" style="width:100px"></td>
+    <td class="r"><input form="rf{{ r.id }}" class="in num" name="max_units" type="number" value="{{ r.max_units|int }}" style="width:80px;text-align:right"></td>
+    <td class="r"><input form="rf{{ r.id }}" class="in num" name="rate" type="number" step="10000" value="{{ r.rate|int }}" style="width:120px;text-align:right"></td>
+    <td class="r num">{{ u.work_days }}</td>
+    <td class="r num">{{ u.cost|won }}</td>
+    <td class="c">{% if u.over_days %}<span class="badge red" title="{{ u.over_days[:10]|join(', ') }}">{{ u.max_peak|round|int }}% · {{ u.over_days|length }}일 과부하</span>{% else %}<span class="muted num">{{ u.max_peak|round|int }}%</span>{% endif %}</td>
+    <td style="white-space:nowrap"><button form="rf{{ r.id }}" class="btn sm">저장</button>
+      <button form="rf{{ r.id }}" class="btn sm ghost danger" name="action" value="delete" onclick="return confirm('자원과 배정을 삭제할까요?')">삭제</button></td>
+  </tr>
+  {% endfor %}
+  <tr>
+    <td><form method="post" id="rfnew"></form><input form="rfnew" class="in" name="name" placeholder="새 자원 이름" required></td>
+    <td><select form="rfnew" class="in" name="type"><option>인력</option><option>장비·외주</option><option>자재</option></select></td>
+    <td><input form="rfnew" class="in" name="grp" style="width:100px"></td>
+    <td class="r"><input form="rfnew" class="in" name="max_units" type="number" value="100" style="width:80px;text-align:right"></td>
+    <td class="r"><input form="rfnew" class="in" name="rate" type="number" step="10000" value="0" style="width:120px;text-align:right"></td>
+    <td colspan="3"></td>
+    <td><button form="rfnew" class="btn sm primary">추가</button></td>
+  </tr>
+  </tbody>
+</table>
+</div>
+
+<h2 style="margin-top:28px">작업별 배정</h2>
+<div class="tbl-wrap"><table class="t">
+  <thead><tr><th>ID</th><th>작업명</th><th>기간</th><th>시작</th><th>완료</th><th>배정 자원</th><th class="r">비용(원)</th></tr></thead>
+  <tbody>{% for t in b.tasks if not t.summary and t.resources %}
+  <tr><td class="num">{{ t.row }}</td><td>{{ t.name }}</td><td class="num">{{ t.forecast_duration }}일</td><td class="num">{{ t.start|kdate }}</td><td class="num">{{ t.finish|kdate }}</td>
+  <td>{% for r in t.resource_list %}<span class="badge">{{ r.name }}{% if r.units != 100 %} {{ r.units|round|int }}%{% endif %}</span> {% endfor %}</td><td class="r num">{{ t.cost|won }}</td></tr>
+  {% endfor %}</tbody>
+</table></div>
+{% endblock %}

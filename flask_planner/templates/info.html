@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head"><div><h1>프로젝트 정보</h1><p>시작일·진척 기준일·작업일 달력을 설정합니다. 진척 기준일은 실적을 반영하는 기준 날짜입니다.</p></div></div>
+<div class="grid g2">
+<form class="card" method="post">
+  <label class="f"><span>프로젝트명</span><input name="name" value="{{ p.name }}" required></label>
+  <div class="grid g2" style="gap:12px">
+    <label class="f"><span>PM</span><input name="manager" value="{{ p.manager }}"></label>
+    <label class="f"><span>시작일</span><input type="date" name="start_date" value="{{ p.start_date }}" required></label>
+    <label class="f"><span>진척 기준일 (Status date)</span><input type="date" name="status_date" value="{{ p.status_date or '' }}"></label>
+  </div>
+  <label class="check"><input type="checkbox" name="skip_weekends" value="1" {{ 'checked' if p.skip_weekends }}> 토·일요일은 작업하지 않음</label>
+  <label class="f"><span>휴일 (YYYY-MM-DD, 쉼표 구분)</span><textarea name="holidays" rows="3">{{ p.holidays }}</textarea></label>
+  <label class="f"><span>설명</span><textarea name="description" rows="3">{{ p.description }}</textarea></label>
+  <button class="btn primary">저장</button>
+</form>
+<div>
+  <div class="grid g2">
+    <div class="kpi"><div class="k">시작</div><div class="v">{{ b.project_start|kdate }}</div></div>
+    <div class="kpi"><div class="k">예측 완료</div><div class="v">{{ b.project_finish|kdate }}</div></div>
+    <div class="kpi"><div class="k">공기</div><div class="v">{{ b.kpi.duration }}<span class="small">작업일</span></div></div>
+    <div class="kpi"><div class="k">총 비용</div><div class="v">{{ (b.kpi.total_cost / 1000000)|round(1) }}<span class="small">백만원</span></div></div>
+    <div class="kpi"><div class="k">작업 / 마일스톤</div><div class="v">{{ b.kpi.task_count }} / {{ b.kpi.milestones }}</div></div>
+    <div class="kpi"><div class="k">기준선</div><div class="v" style="font-size:16px">{{ p.baseline_saved_at or '미저장' }}</div></div>
+  </div>
+  <div class="card" style="margin-top:16px">
+    <h3>저장·백업</h3>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <a class="btn" href="{{ url_for('export_xlsx', pid=p.id) }}">엑셀(.xlsx)</a>
+      <a class="btn" href="{{ url_for('export_pptx', pid=p.id) }}">파워포인트(.pptx)</a>
+      <a class="btn" href="{{ url_for('export_json', pid=p.id) }}">JSON 백업</a>
+    </div>
+  </div>
+</div>
+</div>
+{% endblock %}

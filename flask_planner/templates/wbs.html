@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="page-head"><div><h1>WBS 차트</h1><p>작업 분해 구조를 계층도로 표시합니다. 막대는 진척률, 위쪽 테라코타 선은 주공정 포함 여부입니다.</p></div></div>
+{% set s = b.schedule %}
+{% macro card(t, cls='') %}<div class="wbs-node {{ cls }} {{ 'sum' if t.is_summary }} {{ 'crit' if t.critical }}">
+  <div class="w">{{ t.wbs }}</div><div class="n">{{ t.name }}</div>
+  <div class="w">{{ t.start.strftime('%m/%d') }}~{{ t.finish.strftime('%m/%d') }} · {{ t.forecast_duration }}일 · {{ t.pct|round|int }}%</div>
+  <div class="bar"><span style="width:{{ t.pct }}%"></span></div></div>{% endmacro %}
+{% macro vlist(ids) %}<div class="wbs-v">{% for c in ids %}{% set t = s.tasks[c] %}<div class="wbs-vi">{{ card(t) }}{% if t.children %}{{ vlist(t.children) }}{% endif %}</div>{% endfor %}</div>{% endmacro %}
+<div class="canvas">
+  <div class="wbs-tree">
+    <div class="wbs-node root"><div class="w">0</div><div class="n">{{ p.name }}</div><div class="w">{{ b.project_start }} ~ {{ b.project_finish }}</div></div>
+    <ul>{% for tid in s.order if s.tasks[tid].parent_id is none %}{% set t = s.tasks[tid] %}
+      <li>{{ card(t) }}{% if t.children %}{{ vlist(t.children) }}{% endif %}</li>{% endfor %}</ul>
+  </div>
+</div>
+{% endblock %}
