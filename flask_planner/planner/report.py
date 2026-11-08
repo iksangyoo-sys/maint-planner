@@ -9,6 +9,7 @@ import io
 import json
 import math
 import os
+import sys
 from datetime import date, datetime
 
 from docx import Document
@@ -182,6 +183,9 @@ def generate(b: dict, notes: str = "") -> tuple[dict, str]:
             content["_data"] = ctx
             content["_generated_at"] = datetime.now().isoformat(timespec="seconds")
             return content, model_name()
+        except ModuleNotFoundError:
+            err = (f"(openai 패키지가 이 파이썬에 없습니다. 앱을 끄고 다음 명령을 실행하세요: "
+                   f"\"{sys.executable}\" -m pip install openai)")
         except Exception as e:  # noqa: BLE001 — 네트워크·키 오류 시 규칙 기반으로 대체
             err = f"({type(e).__name__}: {str(e)[:160]})"
     content = _rule_based(ctx, notes)
