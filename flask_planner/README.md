@@ -44,6 +44,20 @@ Windows에서는 `run.bat`을 더블클릭하면 패키지 확인 → 실행 →
 
 보고서 구성: 핵심 메시지 → 핵심 요약 → 일정 현황(기준선/예측 완료일, 공정률, SPI) → 지연 작업 상세 → 원인 분석 → 만회 대책(공정 압축·공정 중첩·자원 재배치 등, 담당·기한·만회일수) → 만회 일정 → 리스크 → 의사결정 요청 → 결론 → 주공정 목록.
 
+## Render 배포
+
+저장소 루트의 `render.yaml`(블루프린트)이 이 `flask_planner/` 폴더를 Render 웹 서비스로 띄웁니다.
+
+1. Render 대시보드 → **New → Blueprint** → GitHub 저장소 `maint-planner` 선택 → `render.yaml` 인식 확인
+2. 값 입력 화면에서 `OPENAI_API_KEY`(필수)와 `APP_PASSWORD`(공개 URL 보호용, 권장)를 입력 → **Apply**
+3. 빌드가 끝나면 `https://project-planner-xxxx.onrender.com` 주소로 접속(비밀번호를 정했다면 아이디 `admin`)
+
+- 시작 명령: `gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 120`
+- 키는 코드·저장소에 넣지 말고 Render의 **Environment** 화면에서만 관리합니다.
+- 무료(Free) 플랜은 15분간 접속이 없으면 잠들었다가 첫 접속 때 30초~1분 걸려 깨어나고,
+  **디스크가 보존되지 않아** 재배포·재시작 때 SQLite 데이터가 초기화됩니다. 작업 결과는 JSON 백업이나 엑셀로 내려받아 두세요.
+  데이터를 계속 보관하려면 유료 플랜에 Persistent Disk를 붙이고 환경변수 `PLANNER_DB=/var/data/planner.db`로 지정합니다.
+
 ## 구조
 
 ```

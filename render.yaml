@@ -1,0 +1,27 @@
+# Render 블루프린트: 저장소 안의 flask_planner/ 폴더를 Flask 웹 서비스로 배포합니다.
+# OPENAI_API_KEY, APP_PASSWORD 값은 여기에 쓰지 말고 Render 대시보드에서 입력하세요(sync: false).
+services:
+  - type: web
+    name: project-planner
+    runtime: python
+    plan: free
+    region: singapore
+    rootDir: flask_planner
+    buildCommand: pip install -r requirements.txt
+    # SQLite 를 쓰므로 프로세스는 1개, 대신 스레드 4개. 보고서 생성(OpenAI 최대 90초)을 위해 timeout 120초.
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 120
+    healthCheckPath: /
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.7
+      - key: OPENAI_MODEL
+        value: gpt-4o-mini
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: SECRET_KEY
+        generateValue: true
+      - key: APP_USER
+        value: admin
+      - key: APP_PASSWORD
+        sync: false

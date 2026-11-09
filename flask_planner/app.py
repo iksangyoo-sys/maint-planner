@@ -4,14 +4,15 @@
 """
 from __future__ import annotations
 
+import hmac
 import io
 import json
 import os
 from datetime import date
 from pathlib import Path
 
-from flask import (Flask, abort, flash, jsonify, redirect, render_template, request, send_file,
-                   url_for)
+from flask import (Flask, Response, abort, flash, jsonify, redirect, render_template, request,
+                   send_file, url_for)
 
 from planner import db, exports, report, service
 from planner.sample import create_sample
@@ -42,6 +43,22 @@ def create_app(test_config: dict | None = None) -> Flask:
     if test_config:
         app.config.update(test_config)
     db.init_db(app)
+
+    # 인터넷에 공개 배포할 때 OpenAI 키 남용을 막기 위한 선택형 비밀번호(HTTP 기본 인증).
+    # 환경변수 APP_PASSWORD 가 있으면 켜지고(아이디는 APP_USER, 기본 'admin'), 없으면 꺼진다.
+    app_password = os.environ.get("APP_PASSWORD", "")
+    app_user = os.environ.get("APP_USER", "admin")
+
+    @app.before_request
+    def require_password():
+        if not app_password or app.config.get("TESTING"):
+            return None
+        auth = request.authorization
+        if (auth and hmac.compare_digest(auth.username or "", app_user)
+                and hmac.compare_digest(auth.password or "", app_password)):
+            return None
+        return Response("로그인이 필요합니다.", 401,
+                        {"WWW-Authenticate": 'Basic realm="planner", charset="UTF-8"'})
 
     @app.context_processor
     def inject():
