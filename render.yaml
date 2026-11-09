@@ -10,7 +10,7 @@ services:
     buildCommand: pip install -r requirements.txt
     # SQLite 를 쓰므로 프로세스는 1개, 대신 스레드 4개. 보고서 생성(OpenAI 최대 90초)을 위해 timeout 120초.
     startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --threads 4 --timeout 120
-    healthCheckPath: /
+    healthCheckPath: /healthz
     autoDeploy: true
     envVars:
       - key: PYTHON_VERSION

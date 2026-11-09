@@ -51,7 +51,7 @@ def create_app(test_config: dict | None = None) -> Flask:
 
     @app.before_request
     def require_password():
-        if not app_password or app.config.get("TESTING"):
+        if not app_password or app.config.get("TESTING") or request.path == "/healthz":
             return None
         auth = request.authorization
         if (auth and hmac.compare_digest(auth.username or "", app_user)
@@ -274,6 +274,11 @@ def create_app(test_config: dict | None = None) -> Flask:
         v = (request.get_json(silent=True) or {}).get("status_date") or None
         db.execute("UPDATE project SET status_date=? WHERE id=?", (v, pid))
         return jsonify(service.bundle_json(service.project_bundle(pid)))
+
+    @app.get("/healthz")
+    def healthz():
+        """Render 헬스체크용(비밀번호 없이 200)."""
+        return "ok"
 
     @app.errorhandler(404)
     def not_found(_):
